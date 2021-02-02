@@ -85,9 +85,16 @@ def detect(save_img=False):
             else:
                 p, s, im0, frame = path, '', im0s, getattr(dataset, 'frame', 0)
 
+            # coarse_classification
+            det_clone = det.clone()
+            det_clone[:, :4] = scale_coords(img.shape[2:], det_clone[:, :4], im0.shape).round()
+            from utils.coarse_classification import coarse_class
+            coarse_class("/gpudata/erwei.wang/data_interface/no_classification/result", names, det_clone, path)
+
+
             p = Path(p)  # to Path
             save_path = str(save_dir / p.name)  # img.jpg
-            txt_path = str(save_dir / 'labels' / p.stem) + ('' if dataset.mode == 'image' else f'_{frame}')  # img.txt
+            txt_path = str(save_dir / 'labels' / p.stem) + ('' if dataset.mode == 'image' else '_{frame}')  # img.txt
             s += '%gx%g ' % img.shape[2:]  # print string
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             if len(det):
@@ -97,7 +104,7 @@ def detect(save_img=False):
                 # Print results
                 for c in det[:, -1].unique():
                     n = (det[:, -1] == c).sum()  # detections per class
-                    s += f'{n} {names[int(c)]}s, '  # add to string
+                    s += '{n} {names[int(c)]}s, '  # add to string
 
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
@@ -108,11 +115,11 @@ def detect(save_img=False):
                             f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
                     if save_img or view_img:  # Add bbox to image
-                        label = f'{names[int(cls)]} {conf:.2f}'
-                        plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)
+                        label = names[int(cls)]+"_"+str(round(conf, 3))
+                        plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=1)
 
             # Print time (inference + NMS)
-            print(f'{s}Done. ({t2 - t1:.3f}s)')
+            print('{s}Done. ({t2 - t1:.3f}s)')
 
             # Stream results
             if view_img:
@@ -136,10 +143,10 @@ def detect(save_img=False):
                     vid_writer.write(im0)
 
     if save_txt or save_img:
-        s = f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ''
-        print(f"Results saved to {save_dir}{s}")
+        s = "\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ''
+        print("Results saved to {save_dir}{s}")
 
-    print(f'Done. ({time.time() - t0:.3f}s)')
+    print('Done. ({time.time() - t0:.3f}s)')
 
 
 if __name__ == '__main__':
@@ -161,6 +168,7 @@ if __name__ == '__main__':
     parser.add_argument('--name', default='exp', help='save results to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     opt = parser.parse_args()
+    # opt.source = "/disk/erwei.wang/images/example.jpeg"
     print(opt)
     check_requirements()
 

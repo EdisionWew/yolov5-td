@@ -7,22 +7,18 @@
 
 
 # download command/URL (optional)
-download: https://github.com/ultralytics/yolov5/releases/download/v1.0/coco128.zip
+#download: https://github.com/ultralytics/yolov5/releases/download/v1.0/coco128.zip
 
 # train and val data as 1) directory: path/images/, 2) file: path/images.txt, or 3) list: [path1/images/, path2/images/]
-train: ../coco128/images/train2017/  # 128 images
-val: ../coco128/images/train2017/  # 128 images
+#train: /disk/erwei.wang/datasets/dh_hw0111/run/train  # 128 images
+#val: /disk/erwei.wang/datasets/dh_hw0111/run/eval  # 128 images
+train: /disk/erwei.wang/datasets/LogoDet
+val: /disk/erwei.wang/datasets/LogoDet
 
 # number of classes
-nc: 80
-
+#nc: 6
+nc: 58
 # class names
-names: [ 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light',
-         'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow',
-         'elephant', 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee',
-         'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat', 'baseball glove', 'skateboard', 'surfboard',
-         'tennis racket', 'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple',
-         'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch',
-         'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone',
-         'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear',
-         'hair drier', 'toothbrush' ]
+#names: ['lv-h-1', 'lv-h-2', 'lv-h-3', 'michaelkors-h-1', 'gucci-h-1', 'fendi-h-1']
+
+names: ['icbc-3', 'socar-1', 'socar-2', 'tubao-1', 'tubao-2', 'tubao-3', 'oakley-2', 'oakley-1', 'timbuk2-1', 'timbuk2-2', 'youngor-3', 'youngor-2', 'uber-1', 'uber-2', 'uber-3', 'taser-1', 'taser-2', 'vidyo-1', 'triumph-2', 'legea-2', 'jd', 'vaude-1', 'legea-1', 'southbeauty-1', 'southbeauty-2', 'southbeauty-3', 'vidyo-2', 'vaude-2', 'ANTA', 'icbc-2', 'icbc-1', 'starbury-1', 'starbury-2', 'superga-1', 'superga-2', 'Barex-2', 'Gurkha-1', 'Gurkha-2', 'huaweimei', 'Barex-1', 'youngor-1', 'snow peak-2', 'vivobarefoot-1', 'vivobarefoot-2', 'Isla-1', 'Isla-2', 'whataburger-2', 'Carolina-1', 'veken-2', 'veken-1', 'veken-3', 'whataburger-1', 'Carolina-2', 'triumph-1', 'Humber-1', 'Humber-2', 'vince camuto-1', 'Glock-2']

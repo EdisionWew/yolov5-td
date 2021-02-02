@@ -96,6 +96,7 @@ def test(data,
     p, r, f1, mp, mr, map50, map, t0, t1 = 0., 0., 0., 0., 0., 0., 0., 0., 0.
     loss = torch.zeros(3, device=device)
     jdict, stats, ap, ap_class, wandb_images = [], [], [], [], []
+    acc_img = []
     for batch_i, (img, targets, paths, shapes) in enumerate(tqdm(dataloader, desc=s)):
         img = img.to(device, non_blocking=True)
         img = img.half() if half else img.float()  # uint8 to fp16/32
@@ -123,6 +124,14 @@ def test(data,
         # Statistics per image
         for si, pred in enumerate(output):
             labels = targets[targets[:, 0] == si, 1:]
+
+            # compute image acc
+            label_unique = set(np.sort(np.unique(labels[:, 0].cpu())))
+            pred_unique = set(np.sort(np.unique(pred[:, -1].cpu())))
+            if len(label_unique) == len(pred_unique) and label_unique == pred_unique:
+                acc_img.append(1.0)
+            else:
+                acc_img.append(0.0)
             nl = len(labels)
             tcls = labels[:, 0].tolist() if nl else []  # target class
             path = Path(paths[si])
@@ -211,6 +220,8 @@ def test(data,
             f = save_dir / f'test_batch{batch_i}_pred.jpg'  # predictions
             Thread(target=plot_images, args=(img, output_to_target(output), paths, f, names), daemon=True).start()
 
+
+
     # Compute statistics
     stats = [np.concatenate(x, 0) for x in zip(*stats)]  # to numpy
     if len(stats) and stats[0].any():
@@ -235,6 +246,7 @@ def test(data,
     if not training:
         print('Speed: %.1f/%.1f/%.1f ms inference/NMS/total per %gx%g image at batch-size %g' % t)
 
+    print("test acc :", sum(acc_img) / len(acc_img))
     # Plots
     if plots:
         confusion_matrix.plot(save_dir=save_dir, names=list(names.values()))
