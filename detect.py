@@ -86,10 +86,10 @@ def detect(save_img=False):
                 p, s, im0, frame = path, '', im0s, getattr(dataset, 'frame', 0)
 
             # coarse_classification
-            det_clone = det.clone()
-            det_clone[:, :4] = scale_coords(img.shape[2:], det_clone[:, :4], im0.shape).round()
-            from utils.coarse_classification import coarse_class
-            coarse_class("/gpudata/erwei.wang/data_interface/no_classification/result", names, det_clone, path)
+            # det_clone = det.clone()
+            # det_clone[:, :4] = scale_coords(img.shape[2:], det_clone[:, :4], im0.shape).round()
+            # from utils.coarse_classification import coarse_class
+            # coarse_class("/gpudata/erwei.wang/data_interface/no_classification/result", names, det_clone, path)
 
 
             p = Path(p)  # to Path
@@ -115,7 +115,7 @@ def detect(save_img=False):
                             f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
                     if save_img or view_img:  # Add bbox to image
-                        label = names[int(cls)]+"_"+str(round(conf, 3))
+                        label = names[int(cls)]+"_"+str(round(conf.item(), 3))
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=1)
 
             # Print time (inference + NMS)

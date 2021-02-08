@@ -97,6 +97,15 @@ def test(data,
     loss = torch.zeros(3, device=device)
     jdict, stats, ap, ap_class, wandb_images = [], [], [], [], []
     acc_img = []
+    target_labels = []
+    pred_labels = []
+
+    brand_names = set()
+    for name_i in names.values():
+        brand_names.add(name_i.split('-')[0])
+    brand_names = list(brand_names)
+    # print("brand_names: ", brand_names)
+    print("len(brand_names): ", len(brand_names))
     for batch_i, (img, targets, paths, shapes) in enumerate(tqdm(dataloader, desc=s)):
         img = img.to(device, non_blocking=True)
         img = img.half() if half else img.float()  # uint8 to fp16/32
@@ -121,6 +130,7 @@ def test(data,
             output = non_max_suppression(inf_out, conf_thres=conf_thres, iou_thres=iou_thres, labels=lb)
             t1 += time_synchronized() - t
 
+
         # Statistics per image
         for si, pred in enumerate(output):
             labels = targets[targets[:, 0] == si, 1:]
@@ -132,6 +142,26 @@ def test(data,
                 acc_img.append(1.0)
             else:
                 acc_img.append(0.0)
+            # if labels is None, images brand is -1
+            if labels.shape[0]==0:
+                target_labels.append(-1)
+            else:
+                tm_label = []
+                for label_i in labels[:, 0]:
+                    tm_label.append(names[int(label_i.item())].split('-')[0])
+                maxlabel = max(tm_label, key=tm_label.count)
+                target_labels.append(brand_names.index(maxlabel))
+
+            plabels = pred[:, -1].cpu()
+            if plabels.shape[0]==0:
+                pred_labels.append(-1)
+            else:
+                tm_label = []
+                for label_i in plabels:
+                    tm_label.append(names[int(label_i.item())].split('-')[0])
+                maxlabel = max(tm_label, key=tm_label.count)
+                pred_labels.append(brand_names.index(maxlabel))
+
             nl = len(labels)
             tcls = labels[:, 0].tolist() if nl else []  # target class
             path = Path(paths[si])
@@ -246,6 +276,10 @@ def test(data,
     if not training:
         print('Speed: %.1f/%.1f/%.1f ms inference/NMS/total per %gx%g image at batch-size %g' % t)
 
+    from utils.compute_rp import compute_recall_precision, per_brand_recall_precison
+    recall, precision = compute_recall_precision(target_labels, pred_labels)
+    per_brand_recall_precison(target_labels, pred_labels, brand_names)
+    print("recall: {}, precision: {}".format(recall, precision))
     print("test acc :", sum(acc_img) / len(acc_img))
     # Plots
     if plots:
