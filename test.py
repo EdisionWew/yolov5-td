@@ -6,6 +6,7 @@ from threading import Thread
 
 import numpy as np
 import torch
+import torch.nn as nn
 import yaml
 from tqdm import tqdm
 
@@ -57,7 +58,9 @@ def test(data,
 
         # Multi-GPU disabled, incompatible with .half() https://github.com/ultralytics/yolov5/issues/99
         # if device.type != 'cpu' and torch.cuda.device_count() > 1:
+        #     stride = model.stride
         #     model = nn.DataParallel(model)
+        #     model.stride = stride
 
     # Half
     half = device.type != 'cpu'  # half precision only supported on CUDA
@@ -99,6 +102,9 @@ def test(data,
     acc_img = []
     target_labels = []
     pred_labels = []
+
+    # record_gt_txt = "./gt_label_txt.txt"
+    # fws = open(record_gt_txt, 'w')
 
     brand_names = set()
     for name_i in names.values():
@@ -151,6 +157,7 @@ def test(data,
                     tm_label.append(names[int(label_i.item())].split('-')[0])
                 maxlabel = max(tm_label, key=tm_label.count)
                 target_labels.append(brand_names.index(maxlabel))
+                # fws.write(paths[si].split('/')[-1] + '\t' + maxlabel+'\n')
 
             plabels = pred[:, -1].cpu()
             if plabels.shape[0]==0:
@@ -165,6 +172,7 @@ def test(data,
             nl = len(labels)
             tcls = labels[:, 0].tolist() if nl else []  # target class
             path = Path(paths[si])
+
             seen += 1
 
             if len(pred) == 0:
@@ -277,9 +285,9 @@ def test(data,
         print('Speed: %.1f/%.1f/%.1f ms inference/NMS/total per %gx%g image at batch-size %g' % t)
 
     from utils.compute_rp import compute_recall_precision, per_brand_recall_precison
-    recall, precision = compute_recall_precision(target_labels, pred_labels)
-    per_brand_recall_precison(target_labels, pred_labels, brand_names)
-    print("recall: {}, precision: {}".format(recall, precision))
+    recall, precision, f1_score = compute_recall_precision(target_labels, pred_labels)
+    per_brand_recall_precison(target_labels, pred_labels, brand_names, os.path.join(save_dir, 'test_result.csv'))
+    print("recall: {}, precision: {}, f1-score: {}".format(recall, precision, f1_score))
     print("test acc :", sum(acc_img) / len(acc_img))
     # Plots
     if plots:
@@ -321,6 +329,8 @@ def test(data,
     maps = np.zeros(nc) + map
     for i, c in enumerate(ap_class):
         maps[c] = ap[i]
+
+    # fws.close()
     return (mp, mr, map50, map, *(loss.cpu() / len(dataloader)).tolist()), maps, t
 
 
@@ -328,10 +338,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='test.py')
     parser.add_argument('--weights', nargs='+', type=str, default='yolov5s.pt', help='model.pt path(s)')
     parser.add_argument('--data', type=str, default='data/coco128.yaml', help='*.data path')
-    parser.add_argument('--batch-size', type=int, default=32, help='size of each image batch')
+    parser.add_argument('--batch-size', type=int, default=192, help='size of each image batch')
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
-    parser.add_argument('--conf-thres', type=float, default=0.001, help='object confidence threshold')
-    parser.add_argument('--iou-thres', type=float, default=0.6, help='IOU threshold for NMS')
+    parser.add_argument('--conf-thres', type=float, default=0.01, help='object confidence threshold')
+    parser.add_argument('--iou-thres', type=float, default=0.5, help='IOU threshold for NMS')
     parser.add_argument('--task', default='val', help="'val', 'test', 'study'")
     parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
     parser.add_argument('--single-cls', action='store_true', help='treat as single-class dataset')
@@ -347,6 +357,7 @@ if __name__ == '__main__':
     opt = parser.parse_args()
     opt.save_json |= opt.data.endswith('coco.yaml')
     opt.data = check_file(opt.data)  # check file
+    os.environ["CUDA_VISIBLE_DEVICES"]="0"
     print(opt)
     check_requirements()
 

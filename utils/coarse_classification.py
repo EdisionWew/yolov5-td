@@ -27,11 +27,27 @@ def coarse_class(root, names, boxes, path):
     path = Path(path)
     h, w, _ = img.shape
 
+    needOCR = True
+    select_name = None
+
     if boxes.shape[0]==0:
         src_dir =  check_dir(os.path.join(root, "empty"))
     else:
-        src_dir = check_dir(os.path.join(root, names[int(boxes[0][-1].item())].split('-')[0]))
+        pre_brand = []
+        res = list(boxes[:, -1].cpu().numpy().astype(int))
+        for i in res:
+            pre_brand.append(names[i].split('-')[0])
+        select_name = max(pre_brand, key=pre_brand.count)
+        src_dir = check_dir(os.path.join(root, select_name))
+        # for i, score in enumerate(list(boxes[:, -2].cpu().numpy())):
+        #     if pre_brand[i] == select_name and score > 0.84:
+        #         needOCR = False
+        #         break
 
+    # if select_name!="supreme" and select_name!="dsquared2":
+    #     return
+    # if not needOCR:
+    #     return
     cp_jpg_str = "cp " + str(path) + ' ' + src_dir.replace(' ', '\ ')
     os.system(cp_jpg_str)
 

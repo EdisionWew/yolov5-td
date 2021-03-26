@@ -13,7 +13,8 @@ from utils.general import check_img_size, check_requirements, non_max_suppressio
     xyxy2xywh, strip_optimizer, set_logging, increment_path
 from utils.plots import plot_one_box
 from utils.torch_utils import select_device, load_classifier, time_synchronized
-
+import os
+os.environ["CUDA_VISIBLE_DEVICES"]="2,3"
 
 def detect(save_img=False):
     source, weights, view_img, save_txt, imgsz = opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size
@@ -86,10 +87,11 @@ def detect(save_img=False):
                 p, s, im0, frame = path, '', im0s, getattr(dataset, 'frame', 0)
 
             # coarse_classification
-            # det_clone = det.clone()
-            # det_clone[:, :4] = scale_coords(img.shape[2:], det_clone[:, :4], im0.shape).round()
-            # from utils.coarse_classification import coarse_class
-            # coarse_class("/gpudata/erwei.wang/data_interface/no_classification/result", names, det_clone, path)
+            det_clone = det.clone()
+            det_clone[:, :4] = scale_coords(img.shape[2:], det_clone[:, :4], im0.shape).round()
+            from utils.coarse_classification import coarse_class
+            coarse_class("/gpudata/erwei.wang/data_interface/logo32", names, det_clone, path)
+
 
 
             p = Path(p)  # to Path
@@ -168,6 +170,7 @@ if __name__ == '__main__':
     parser.add_argument('--name', default='exp', help='save results to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     opt = parser.parse_args()
+    opt.device = "2"
     # opt.source = "/disk/erwei.wang/images/example.jpeg"
     print(opt)
     check_requirements()

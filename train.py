@@ -342,6 +342,8 @@ def train(hyp, opt, device, tb_writer=None, wandb=None):
                 results, maps, times = test.test(opt.data,
                                                  batch_size=total_batch_size,
                                                  imgsz=imgsz_test,
+                                                 conf_thres=0.01,
+                                                 iou_thres=0.5,  # for NMS
                                                  model=ema.ema,
                                                  single_cls=opt.single_cls,
                                                  dataloader=testloader,
@@ -439,8 +441,8 @@ if __name__ == '__main__':
     parser.add_argument('--cfg', type=str, default='', help='model.yaml path')
     parser.add_argument('--data', type=str, default='data/coco128.yaml', help='data.yaml path')
     parser.add_argument('--hyp', type=str, default='data/hyp.scratch.yaml', help='hyperparameters path')
-    parser.add_argument('--epochs', type=int, default=300)
-    parser.add_argument('--batch-size', type=int, default=48, help='total batch size for all GPUs')
+    parser.add_argument('--epochs', type=int, default=160)
+    parser.add_argument('--batch-size', type=int, default=96, help='total batch size for all GPUs')
     parser.add_argument('--img-size', nargs='+', type=int, default=[640, 640], help='[train, test] image sizes')
     parser.add_argument('--rect', action='store_true', help='rectangular training')
     parser.add_argument('--resume', nargs='?', const=True, default=False, help='resume most recent training')
@@ -465,7 +467,7 @@ if __name__ == '__main__':
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     parser.add_argument('--quad', action='store_true', help='quad dataloader')
     opt = parser.parse_args()
-    #opt.device = "1, 2, 3"
+    opt.device = "0, 1, 2"
 
     # Set DDP variables
     opt.world_size = int(os.environ['WORLD_SIZE']) if 'WORLD_SIZE' in os.environ else 1
@@ -493,7 +495,9 @@ if __name__ == '__main__':
         opt.save_dir = increment_path(Path(opt.project) / opt.name, exist_ok=opt.exist_ok | opt.evolve)  # increment run
 
     # DDP mode
+    # opt.batch_size = 192
     opt.total_batch_size = opt.batch_size
+    print("opt.batch_size:", opt.batch_size)
     device = select_device(opt.device, batch_size=opt.batch_size)
     if opt.local_rank != -1:
         assert torch.cuda.device_count() > opt.local_rank
